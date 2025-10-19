@@ -1,0 +1,232 @@
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { CreatePatientSchema, CreatePhysiotherapistSchema, AssignPhysiotherapistSchema, PrescribeExerciseSchema, UpdatePatientSchema, UpdatePhysiotherapistSchema } from '../types';
+import prisma from '../utils/prisma';
+
+export const createPatient = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password } = CreatePatientSchema.parse(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    if (req?.user?.role !== "MANAGER") {
+      return res.status(400).json({ error: "Invalid user" });
+    }
+
+    const userId = req?.user?.id;
+    const manager = await prisma.user.findUnique({ where: { id: userId } });
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        clinicId: manager?.clinicId || null,
+        password: hashedPassword,
+        role: 'PATIENT',
+      },
+    });
+
+    await prisma.patientProfile.create({
+      data: { userId: user.id },
+    });
+
+    res.status(201).json({ message: 'Patient created successfully' });
+  } catch (error) {
+    console.error(error);
+
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const createPhysiotherapist = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password } = CreatePhysiotherapistSchema.parse(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'PHYSIOTHERAPIST',
+      },
+    });
+
+    await prisma.physiotherapistProfile.create({
+      data: { userId: user.id },
+    });
+
+    res.status(201).json({ message: 'Physiotherapist created successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const assignPhysiotherapist = async (req: Request, res: Response) => {
+  try {
+    const { patientId } = req.params;
+    const { physiotherapistId } = AssignPhysiotherapistSchema.parse(req.body);
+
+    if (!patientId) {
+      return res.status(400).json({ error: 'Patient ID is required' });
+    }
+
+    await prisma.patientProfile.update({
+      where: { userId: patientId },
+      data: { physiotherapistId },
+    });
+
+    res.json({ message: 'Physiotherapist assigned successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const prescribeExercise = async (req: Request, res: Response) => {
+  try {
+    const { patientId } = req.params;
+    const { exerciseId } = PrescribeExerciseSchema.parse(req.body);
+
+    if (!patientId) {
+      return res.status(400).json({ error: 'Patient ID is required' });
+    }
+
+    await prisma.prescribedExercise.create({
+      data: {
+        patientId,
+        exerciseId,
+      },
+    });
+
+    res.status(201).json({ message: 'Exercise prescribed successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const getPatients = async (req: Request, res: Response) => {
+  try {
+    const managerId = req.user!.id;
+
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { clinicId: true },
+    });
+
+    if (!manager || !manager.clinicId) {
+      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+    }
+
+    const patients = await prisma.patientProfile.findMany({
+      where: {
+        user: {
+          clinicId: manager.clinicId,
+        },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+        physiotherapist: {
+          include: {
+            user: {
+              select: { id: true, name: true },
+            },
+          },
+        },
+      },
+    });
+
+    res.json(patients);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getMetrics = async (req: Request, res: Response) => {
+  // Placeholder for metrics logic
+  res.json({ message: 'Metrics endpoint - placeholder' });
+};
+
+export const updatePatient = async (req: Request, res: Response) => {
+  try {
+    const { patientId } = req.params;
+    const updateData = UpdatePatientSchema.parse(req.body);
+
+    if (!patientId) {
+      return res.status(400).json({ error: 'Patient ID is required' });
+    }
+
+    const managerId = req.user!.id;
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { clinicId: true },
+    });
+
+    if (!manager || !manager.clinicId) {
+      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+    }
+
+    const patient = await prisma.user.findUnique({
+      where: { id: patientId },
+      select: { clinicId: true, role: true },
+    });
+    console.log(patientId, patient);
+    if (!patient || patient.role !== 'PATIENT' || patient.clinicId !== manager.clinicId) {
+      return res.status(404).json({ error: 'Patient not found or not in your clinic' });
+    }
+
+    const dataToUpdate: any = {};
+    if (updateData.name) dataToUpdate.name = updateData.name;
+    if (updateData.email) dataToUpdate.email = updateData.email;
+    if (updateData.password) {
+      dataToUpdate.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: patientId },
+      data: dataToUpdate,
+    });
+
+    res.json({ message: 'Patient updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const updatePhysiotherapist = async (req: Request, res: Response) => {
+  try {
+    const { physioId } = req.params;
+    const updateData = UpdatePhysiotherapistSchema.parse(req.body);
+
+    if (!physioId) {
+      return res.status(400).json({ error: 'Physiotherapist ID is required' });
+    }
+
+    const physiotherapist = await prisma.user.findUnique({
+      where: { id: physioId },
+      select: { role: true },
+    });
+
+    if (!physiotherapist || physiotherapist.role !== 'PHYSIOTHERAPIST') {
+      return res.status(404).json({ error: 'Physiotherapist not found' });
+    }
+
+    const dataToUpdate: any = {};
+    if (updateData.name) dataToUpdate.name = updateData.name;
+    if (updateData.email) dataToUpdate.email = updateData.email;
+    if (updateData.password) {
+      dataToUpdate.password = await bcrypt.hash(updateData.password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id: physioId },
+      data: dataToUpdate,
+    });
+
+    res.json({ message: 'Physiotherapist updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};

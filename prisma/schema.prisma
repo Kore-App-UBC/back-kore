@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  clinicId  String?
+  clinic    Clinic?  @relation(fields: [clinicId], references: [id])
+  patientProfile     PatientProfile?
+  physiotherapistProfile PhysiotherapistProfile?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Clinic {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PatientProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  physiotherapistId String?
+  physiotherapist   PhysiotherapistProfile? @relation(fields: [physiotherapistId], references: [id])
+  prescribedExercises PrescribedExercise[]
+  videoSubmissions   VideoSubmission[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model PhysiotherapistProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id])
+  patients         PatientProfile[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Exercise {
+  id               String   @id @default(cuid())
+  name             String
+  description      String
+  instructionsUrl  String
+  prescribedExercises PrescribedExercise[]
+  videoSubmissions VideoSubmission[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model PrescribedExercise {
+  id         String   @id @default(cuid())
+  patientId  String
+  patient    PatientProfile @relation(fields: [patientId], references: [id])
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  prescribedAt DateTime @default(now())
+  @@unique([patientId, exerciseId])
+}
+
+model VideoSubmission {
+  id               String   @id @default(cuid())
+  patientId        String
+  patient          PatientProfile @relation(fields: [patientId], references: [id])
+  exerciseId       String
+  exercise         Exercise @relation(fields: [exerciseId], references: [id])
+  videoUrl         String
+  patientComments  String?
+  status           SubmissionStatus @default(PENDING)
+  submittedAt      DateTime @default(now())
+  report           Report?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Report {
+  id               String   @id @default(cuid())
+  submissionId     String   @unique
+  submission       VideoSubmission @relation(fields: [submissionId], references: [id])
+  iaAnalysis       Json
+  physioFeedback   String?
+  finalizedAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum Role {
+  PATIENT
+  PHYSIOTHERAPIST
+  MANAGER
+}
+
+enum SubmissionStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  REVIEWED
+}
