@@ -7,8 +7,10 @@ import {
   prescribeExercise,
   getMetrics,
   getPatients,
+  getPhysiotherapists,
   updatePatient,
   updatePhysiotherapist,
+  getPhysiotherapistsProfileDropdown,
 } from '../controllers/managerController';
 
 const router = express.Router();
@@ -21,6 +23,8 @@ router.put('/patients/:patientId', updatePatient);
 router.get('/patients', getPatients);
 router.post('/physiotherapists', createPhysiotherapist);
 router.put('/physiotherapists/:physioId', updatePhysiotherapist);
+router.get('/physiotherapists', getPhysiotherapists);
+router.get('/physiotherapists/profile/dropdown', getPhysiotherapistsProfileDropdown);
 router.post('/patients/:patientId/assign', assignPhysiotherapist);
 router.post('/patients/:patientId/prescribe', prescribeExercise);
 router.get('/metrics', getMetrics);

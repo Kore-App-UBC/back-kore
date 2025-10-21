@@ -42,10 +42,18 @@ export const createPhysiotherapist = async (req: Request, res: Response) => {
     const { name, email, password } = CreatePhysiotherapistSchema.parse(req.body);
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    if (req?.user?.role !== "MANAGER") {
+      return res.status(400).json({ error: "Invalid user" });
+    }
+
+    const userId = req?.user?.id;
+    const manager = await prisma.user.findUnique({ where: { id: userId } });
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
+        clinicId: manager?.clinicId || null,
         password: hashedPassword,
         role: 'PHYSIOTHERAPIST',
       },
@@ -57,6 +65,8 @@ export const createPhysiotherapist = async (req: Request, res: Response) => {
 
     res.status(201).json({ message: 'Physiotherapist created successfully' });
   } catch (error) {
+    console.error(error);
+
     res.status(400).json({ error: 'Invalid input' });
   }
 };
@@ -70,13 +80,17 @@ export const assignPhysiotherapist = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Patient ID is required' });
     }
 
+    console.log(patientId, physiotherapistId);
+
     await prisma.patientProfile.update({
-      where: { userId: patientId },
+      where: { id: patientId },
       data: { physiotherapistId },
     });
 
     res.json({ message: 'Physiotherapist assigned successfully' });
   } catch (error) {
+    console.error(error);
+
     res.status(400).json({ error: 'Invalid input' });
   }
 };
@@ -170,7 +184,7 @@ export const updatePatient = async (req: Request, res: Response) => {
       where: { id: patientId },
       select: { clinicId: true, role: true },
     });
-    console.log(patientId, patient);
+
     if (!patient || patient.role !== 'PATIENT' || patient.clinicId !== manager.clinicId) {
       return res.status(404).json({ error: 'Patient not found or not in your clinic' });
     }
@@ -191,6 +205,37 @@ export const updatePatient = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const getPhysiotherapists = async (req: Request, res: Response) => {
+  try {
+    const managerId = req.user!.id;
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { clinicId: true },
+    });
+
+    if (!manager || !manager.clinicId) {
+      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+    }
+
+    const physiotherapists = await prisma.physiotherapistProfile.findMany({
+      where: {
+        user: {
+          clinicId: manager.clinicId,
+        },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    res.json(physiotherapists);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
@@ -228,5 +273,41 @@ export const updatePhysiotherapist = async (req: Request, res: Response) => {
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const getPhysiotherapistsProfileDropdown = async (req: Request, res: Response) => {
+  try {
+    const managerId = req.user!.id;
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { clinicId: true },
+    });
+
+    if (!manager || !manager.clinicId) {
+      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+    }
+
+    const physiotherapistsProfile = await prisma.physiotherapistProfile.findMany({
+      where: {
+        user: {
+          clinicId: manager.clinicId,
+        },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+
+    const dropdown = physiotherapistsProfile.map(profile => ({
+      label: profile.user.name,
+      value: profile.id,
+    }));
+
+    res.json(dropdown);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

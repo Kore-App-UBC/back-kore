@@ -16,10 +16,16 @@ export const getMe = async (req: Request, res: Response) => {
 
 export const getPatients = async (req: Request, res: Response) => {
   try {
+    const physiotherapistProfile = await prisma.physiotherapistProfile.findUnique({
+      where: { userId: req.user!.id },
+      select: { id: true }
+    });
+
     const patients = await prisma.patientProfile.findMany({
-      where: { physiotherapistId: req.user!.id },
+      where: { physiotherapistId: physiotherapistProfile!.id },
       include: { user: true },
     });
+
     res.json(patients);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
