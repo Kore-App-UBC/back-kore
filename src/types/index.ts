@@ -51,3 +51,19 @@ export const UpdatePhysiotherapistSchema = z.object({
   email: z.email().optional(),
   password: z.string().min(6).optional(),
 });
+
+export const CreateExerciseSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  instructionsUrl: z.string().url(),
+  classificationData: z.any().optional(), // JSON for thresholds and calculations
+  animationData: z.any().optional(), // JSON for 3D animation data
+});
+
+export const UpdateExerciseSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  instructionsUrl: z.string().url().optional(),
+  classificationData: z.any().optional(),
+  animationData: z.any().optional(),
+});

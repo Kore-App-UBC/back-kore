@@ -55,6 +55,8 @@ model Exercise {
   name             String
   description      String
   instructionsUrl  String
+  classificationData Json?  // Stores thresholds and angle calculations for classification
+  animationData    Json?  // Stores 3D points and complete animation logic for demo
   prescribedExercises PrescribedExercise[]
   videoSubmissions VideoSubmission[]
   createdAt        DateTime @default(now())

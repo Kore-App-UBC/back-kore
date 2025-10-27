@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import { CreatePatientSchema, CreatePhysiotherapistSchema, AssignPhysiotherapistSchema, PrescribeExerciseSchema, UpdatePatientSchema, UpdatePhysiotherapistSchema } from '../types';
+import { CreatePatientSchema, CreatePhysiotherapistSchema, AssignPhysiotherapistSchema, PrescribeExerciseSchema, UpdatePatientSchema, UpdatePhysiotherapistSchema, CreateExerciseSchema, UpdateExerciseSchema } from '../types';
 import prisma from '../utils/prisma';
 
 export const createPatient = async (req: Request, res: Response) => {
@@ -307,6 +307,102 @@ export const getPhysiotherapistsProfileDropdown = async (req: Request, res: Resp
     }));
 
     res.json(dropdown);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const createExercise = async (req: Request, res: Response) => {
+  try {
+    const { name, description, instructionsUrl, classificationData, animationData } = CreateExerciseSchema.parse(req.body);
+
+    if (req?.user?.role !== "MANAGER") {
+      return res.status(400).json({ error: "Invalid user" });
+    }
+
+    const exercise = await prisma.exercise.create({
+      data: {
+        name,
+        description,
+        instructionsUrl,
+        classificationData,
+        animationData,
+      },
+    });
+
+    // Reload exercises in pose service after creation
+    const { reloadExercises } = await import('../services/poseService');
+    await reloadExercises();
+
+    res.status(201).json({ message: 'Exercise created successfully', exercise });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const updateExercise = async (req: Request, res: Response) => {
+  try {
+    const { exerciseId } = req.params;
+    const updateData = UpdateExerciseSchema.parse(req.body);
+
+    if (!exerciseId) {
+      return res.status(400).json({ error: 'Exercise ID is required' });
+    }
+
+    const dataToUpdate: any = {};
+    if (updateData.name) dataToUpdate.name = updateData.name;
+    if (updateData.description) dataToUpdate.description = updateData.description;
+    if (updateData.instructionsUrl) dataToUpdate.instructionsUrl = updateData.instructionsUrl;
+    if (updateData.classificationData !== undefined) dataToUpdate.classificationData = updateData.classificationData;
+    if (updateData.animationData !== undefined) dataToUpdate.animationData = updateData.animationData;
+
+    await prisma.exercise.update({
+      where: { id: exerciseId },
+      data: dataToUpdate,
+    });
+
+    // Reload exercises in pose service after update
+    const { reloadExercises } = await import('../services/poseService');
+    await reloadExercises();
+
+    res.json({ message: 'Exercise updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const deleteExercise = async (req: Request, res: Response) => {
+  try {
+    const { exerciseId } = req.params;
+
+    if (!exerciseId) {
+      return res.status(400).json({ error: 'Exercise ID is required' });
+    }
+
+    await prisma.exercise.delete({
+      where: { id: exerciseId },
+    });
+
+    // Reload exercises in pose service after deletion
+    const { reloadExercises } = await import('../services/poseService');
+    await reloadExercises();
+
+    res.json({ message: 'Exercise deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Invalid input' });
+  }
+};
+
+export const getExercises = async (req: Request, res: Response) => {
+  try {
+    const exercises = await prisma.exercise.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(exercises);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
   }

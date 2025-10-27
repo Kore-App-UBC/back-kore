@@ -11,6 +11,10 @@ import {
   updatePatient,
   updatePhysiotherapist,
   getPhysiotherapistsProfileDropdown,
+  createExercise,
+  updateExercise,
+  deleteExercise,
+  getExercises,
 } from '../controllers/managerController';
 
 const router = express.Router();
@@ -28,5 +32,9 @@ router.get('/physiotherapists/profile/dropdown', getPhysiotherapistsProfileDropd
 router.post('/patients/:patientId/assign', assignPhysiotherapist);
 router.post('/patients/:patientId/prescribe', prescribeExercise);
 router.get('/metrics', getMetrics);
+router.post('/exercises', createExercise);
+router.put('/exercises/:exerciseId', updateExercise);
+router.delete('/exercises/:exerciseId', deleteExercise);
+router.get('/exercises', getExercises);
 
 export default router;
