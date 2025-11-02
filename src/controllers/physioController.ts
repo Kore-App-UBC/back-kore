@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { FeedbackSchema, PrescribeExerciseSchema } from '../types';
 import prisma from '../utils/prisma';
+import { getSignedUrlForVideo } from '../services/videoService';
 
 export const getMe = async (req: Request, res: Response) => {
   try {
@@ -34,13 +35,18 @@ export const getPatients = async (req: Request, res: Response) => {
 
 export const getSubmissionQueue = async (req: Request, res: Response) => {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
     const submissions = await prisma.videoSubmission.findMany({
       where: {
-        patient: { physiotherapistId: req.user!.id },
+        patient: { physiotherapist: { userId: req.user.id } },
         status: 'PROCESSED',
       },
       include: { report: true, patient: { include: { user: true } }, exercise: true },
     });
+
     res.json(submissions);
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -61,6 +67,11 @@ export const getSubmissionDetails = async (req: Request, res: Response) => {
 
     if (!submission) {
       return res.status(404).json({ error: 'Submission not found' });
+    }
+
+    if (submission.videoUrl) {
+      const publicVideoUrl = await getSignedUrlForVideo(submission.videoUrl);
+      submission.videoUrl = publicVideoUrl;
     }
 
     res.json(submission);

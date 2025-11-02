@@ -157,8 +157,84 @@ export const getPatients = async (req: Request, res: Response) => {
 };
 
 export const getMetrics = async (req: Request, res: Response) => {
-  // Placeholder for metrics logic
-  res.json({ message: 'Metrics endpoint - placeholder' });
+  try {
+    const managerId = req.user!.id;
+
+    const manager = await prisma.user.findUnique({
+      where: { id: managerId },
+      select: { clinicId: true },
+    });
+
+    if (!manager || !manager.clinicId) {
+      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+    }
+
+    const clinicId = manager.clinicId;
+
+    // Total patients and physiotherapists in the manager's clinic
+    const [totalPatients, totalPhysiotherapists] = await Promise.all([
+      prisma.user.count({ where: { role: 'PATIENT', clinicId } }),
+      prisma.user.count({ where: { role: 'PHYSIOTHERAPIST', clinicId } }),
+    ]);
+
+    // Total exercises in the system
+    const totalExercises = await prisma.exercise.count();
+
+    // Prescribed exercises grouped by exercise (for this clinic)
+    const prescribedGroups = await prisma.prescribedExercise.groupBy({
+      by: ['exerciseId'],
+      where: {
+        patient: {
+          user: {
+            clinicId,
+          },
+        },
+      },
+      _count: {
+        exerciseId: true,
+      },
+    });
+
+    // Attach exercise names to groups
+    const exerciseIds = prescribedGroups.map(g => g.exerciseId);
+    const exercises = exerciseIds.length
+      ? await prisma.exercise.findMany({ where: { id: { in: exerciseIds } }, select: { id: true, name: true } })
+      : [];
+
+    const exercisesByPrescription = prescribedGroups.map(g => ({
+      exerciseId: g.exerciseId,
+      exerciseName: exercises.find(e => e.id === g.exerciseId)?.name || null,
+      prescribedCount: g._count.exerciseId,
+    }));
+
+    // Active submissions that were not reviewed (pending/processing/processed)
+    const activeSubmissionsNotReviewed = await prisma.videoSubmission.count({
+      where: {
+        status: { not: 'REVIEWED' },
+        patient: { user: { clinicId } },
+      },
+    });
+
+    // Complete sessions already reviewed
+    const completeSessionsReviewed = await prisma.videoSubmission.count({
+      where: {
+        status: 'REVIEWED',
+        patient: { user: { clinicId } },
+      },
+    });
+
+    return res.json({
+      totalPatients,
+      totalPhysiotherapists,
+      totalExercises,
+      exercisesByPrescription,
+      activeSubmissionsNotReviewed,
+      completeSessionsReviewed,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 };
 
 export const updatePatient = async (req: Request, res: Response) => {

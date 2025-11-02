@@ -17,6 +17,7 @@ model User {
   clinic    Clinic?  @relation(fields: [clinicId], references: [id])
   patientProfile     PatientProfile?
   physiotherapistProfile PhysiotherapistProfile?
+  refreshTokens      RefreshToken[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -97,6 +98,17 @@ model Report {
   finalizedAt      DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  token      String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  revoked    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  replacedBy String?  // token string of the replacement (if rotated)
 }
 
 enum Role {

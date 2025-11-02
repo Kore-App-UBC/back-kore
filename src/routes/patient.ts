@@ -15,7 +15,11 @@ router.use(authorize('PATIENT'));
 
 router.get('/me', getMe);
 router.get('/exercises', getExercises);
-router.post('/submissions', upload.single('videoFile'), submitVideo);
+router.post(
+  '/submissions',
+  upload.single('videoFile'),
+  submitVideo
+);
 router.get('/submissions/history', getSubmissionHistory);
 
 export default router;

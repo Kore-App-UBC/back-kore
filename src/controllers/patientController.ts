@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SubmitVideoSchema } from '../types';
 import prisma from '../utils/prisma';
-import { uploadVideoToS3 } from '../services/videoService';
+import { uploadVideoToGCS } from '../services/videoService';
 import { processVideoSubmission } from '../services/processingService';
 
 export const getMe = async (req: Request, res: Response) => {
@@ -37,17 +37,18 @@ export const getExercises = async (req: Request, res: Response) => {
 export const submitVideo = async (req: Request, res: Response) => {
   try {
     const { exerciseId, patientComments } = SubmitVideoSchema.parse(req.body);
-    const file = (req as any).file;
+    const file = req.file;
 
     if (!file) {
       return res.status(400).json({ error: 'Video file is required' });
     }
 
-    const videoUrl = await uploadVideoToS3(file);
+    const videoUrl = await uploadVideoToGCS(file);
 
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: req.user!.id },
     });
+
     if (!patientProfile) {
       return res.status(404).json({ error: 'Patient profile not found' });
     }
@@ -62,11 +63,15 @@ export const submitVideo = async (req: Request, res: Response) => {
       },
     });
 
-    // Trigger async processing
     processVideoSubmission(submission.id);
 
-    res.status(201).json({ message: 'Video submitted successfully', submission });
+    const response: Partial<typeof submission> = { ...submission };
+    delete response.videoUrl;
+
+    res.status(201).json({ message: 'Video submitted successfully', submission: response });
   } catch (error) {
+    console.error('Error in submitVideo:', error);
+
     res.status(400).json({ error: 'Invalid input' });
   }
 };
