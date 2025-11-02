@@ -78,3 +78,27 @@ export const getSignedUrlForVideo = async (
 
   return urlOrArray as string;
 };
+
+export const getUploadUrlForFrontend = async (
+  originalName = 'video.mp4',
+  contentType = 'video/mp4',
+  expiresInMs = 15 * 60 * 1000,
+): Promise<{ url: string; destination: string }> => {
+  if (!bucketName) {
+    throw new Error('No bucket configured. Set GCS_BUCKET_NAME in env.');
+  }
+
+  const destination = `${Date.now()}_${path.basename(originalName || 'video.mp4')}`;
+  const bucket = storage.bucket(bucketName);
+  const file = bucket.file(destination);
+
+  const urlOrArray = await file.getSignedUrl({
+    action: 'write',
+    expires: Date.now() + expiresInMs,
+    contentType,
+  });
+
+  const url = Array.isArray(urlOrArray) ? urlOrArray[0] : (urlOrArray as unknown as string);
+
+  return { url, destination };
+};

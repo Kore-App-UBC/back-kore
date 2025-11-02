@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SubmitVideoSchema } from '../types';
 import prisma from '../utils/prisma';
-import { uploadVideoToGCS } from '../services/videoService';
+import { getUploadUrlForFrontend, uploadVideoToGCS } from '../services/videoService';
 import { processVideoSubmission } from '../services/processingService';
 
 export const getMe = async (req: Request, res: Response) => {
@@ -37,13 +37,7 @@ export const getExercises = async (req: Request, res: Response) => {
 export const submitVideo = async (req: Request, res: Response) => {
   try {
     const { exerciseId, patientComments } = SubmitVideoSchema.parse(req.body);
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ error: 'Video file is required' });
-    }
-
-    const videoUrl = await uploadVideoToGCS(file);
+    const { url: uploadUrl, destination } = await getUploadUrlForFrontend();
 
     const patientProfile = await prisma.patientProfile.findUnique({
       where: { userId: req.user!.id },
@@ -57,7 +51,7 @@ export const submitVideo = async (req: Request, res: Response) => {
       data: {
         patientId: patientProfile.id,
         exerciseId,
-        videoUrl,
+        videoUrl: destination,
         patientComments: patientComments || null,
         status: 'PENDING',
       },
@@ -68,7 +62,7 @@ export const submitVideo = async (req: Request, res: Response) => {
     const response: Partial<typeof submission> = { ...submission };
     delete response.videoUrl;
 
-    res.status(201).json({ message: 'Video submitted successfully', submission: response });
+    res.status(201).json({ message: 'Video submitted successfully', submission: response, uploadUrl });
   } catch (error) {
     console.error('Error in submitVideo:', error);
 
@@ -87,6 +81,7 @@ export const getSubmissionHistory = async (req: Request, res: Response) => {
     const submissions = await prisma.videoSubmission.findMany({
       where: { patientId: patientProfile.id },
       include: { report: true },
+      orderBy: { createdAt: 'desc' },
     });
     res.json(submissions);
   } catch (error) {

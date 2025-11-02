@@ -45,6 +45,7 @@ export const getSubmissionQueue = async (req: Request, res: Response) => {
         status: 'PROCESSED',
       },
       include: { report: true, patient: { include: { user: true } }, exercise: true },
+      orderBy: { createdAt: 'desc' },
     });
 
     res.json(submissions);
