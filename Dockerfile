@@ -12,10 +12,10 @@ RUN npm install --no-audit --no-fund
 COPY tsconfig.json ./
 COPY prisma ./prisma
 COPY src ./src
-COPY .env* ./ || true
+COPY .env* ./
 
 # Generate Prisma client (if prisma is used) and build TS
-RUN npx prisma generate || true
+RUN npx prisma generate
 RUN npm run build
 
 # Remove dev dependencies to keep node_modules small
