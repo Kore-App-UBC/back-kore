@@ -1,0 +1,14 @@
+node_modules
+dist
+uploads
+.env
+.env.*
+.git
+.github
+tests
+jest.config.js
+*.log
+npm-debug.log*
+.DS_Store
+docker-compose.yml
+/.vscode
