@@ -20,14 +20,14 @@ async function main() {
   // Create clinic
   const clinic = await prisma.clinic.create({
     data: {
-      name: 'Example Clinic',
+      name: 'Clínica de Exemplo',
     },
   });
 
   // Create users with different roles
   const patient = await prisma.user.create({
     data: {
-      name: 'John Doe',
+      name: 'João Silva',
       email: 'patient@example.com',
       password: hashedPassword,
       role: 'PATIENT',
@@ -36,7 +36,7 @@ async function main() {
 
   const physiotherapist = await prisma.user.create({
     data: {
-      name: 'Jane Smith',
+      name: 'Maria Souza',
       email: 'physio@example.com',
       password: hashedPassword,
       role: 'PHYSIOTHERAPIST',
@@ -45,7 +45,7 @@ async function main() {
 
   const manager = await prisma.user.create({
     data: {
-      name: 'Bob Johnson',
+      name: 'Carlos Pereira',
       email: 'manager@example.com',
       password: hashedPassword,
       role: 'MANAGER',
@@ -56,8 +56,8 @@ async function main() {
   // Create exercises based on pose_evaluation.py
   const exercises = [
     {
-      name: 'Bicep Curls',
-      description: 'Perform bicep curls by curling your arms from extended to flexed position.',
+      name: 'Rosca Bíceps',
+      description: 'Realize rosca bíceps flexionando os braços da posição estendida para a flexionada.',
       instructionsUrl: 'https://example.com/bicep-curls',
       classificationData: {
         thresholds: {
@@ -146,8 +146,8 @@ async function main() {
       },
     },
     {
-      name: 'Shoulder Abduction',
-      description: 'Raise your arms out to the sides away from your body.',
+      name: 'Abdução de Ombro',
+      description: 'Levante os braços para os lados, afastando-os do corpo.',
       instructionsUrl: 'https://example.com/shoulder-abduction',
       classificationData: {
         thresholds: {
@@ -243,8 +243,8 @@ async function main() {
       },
     },
     {
-      name: 'Lateral Leg Raise',
-      description: 'Raise your leg out to the side while standing.',
+      name: 'Elevação Lateral de Perna',
+      description: 'Eleve a perna para o lado enquanto estiver em pé.',
       instructionsUrl: 'https://example.com/lateral-leg-raise',
       classificationData: {
         thresholds: {
@@ -336,8 +336,8 @@ async function main() {
       },
     },
     {
-      name: 'Knee Extension',
-      description: 'Extend your leg from a seated position.',
+      name: 'Extensão de Joelho',
+      description: 'Estenda a perna a partir da posição sentada.',
       instructionsUrl: 'https://example.com/knee-extension',
       classificationData: {
         thresholds: {
