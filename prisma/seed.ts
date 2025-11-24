@@ -56,8 +56,8 @@ async function main() {
   // Create exercises based on pose_evaluation.py
   const exercises = [
     {
-      name: 'Rosca Bíceps',
-      description: 'Realize rosca bíceps flexionando os braços da posição estendida para a flexionada.',
+      name: 'Flexão de Bíceps',
+      description: 'Realize a flexão de bíceps flexionando os braços da posição estendida para a flexionada.',
       instructionsUrl: 'https://example.com/bicep-curls',
       classificationData: {
         thresholds: {
@@ -146,7 +146,7 @@ async function main() {
       },
     },
     {
-      name: 'Abdução de Ombro',
+      name: 'Levantamento de Ombro',
       description: 'Levante os braços para os lados, afastando-os do corpo.',
       instructionsUrl: 'https://example.com/shoulder-abduction',
       classificationData: {
