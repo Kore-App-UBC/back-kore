@@ -12,7 +12,7 @@ export const getMe = async (req: Request, res: Response) => {
     });
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -22,7 +22,7 @@ export const getExercises = async (req: Request, res: Response) => {
       where: { userId: req.user!.id },
     });
     if (!patientProfile) {
-      return res.status(404).json({ error: 'Patient profile not found' });
+      return res.status(404).json({ error: 'Perfil do paciente não encontrado' });
     }
     const exercises = await prisma.prescribedExercise.findMany({
       where: { patientId: patientProfile.id },
@@ -30,7 +30,7 @@ export const getExercises = async (req: Request, res: Response) => {
     });
     res.json(exercises);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -44,7 +44,7 @@ export const submitVideo = async (req: Request, res: Response) => {
     });
 
     if (!patientProfile) {
-      return res.status(404).json({ error: 'Patient profile not found' });
+      return res.status(404).json({ error: 'Perfil do paciente não encontrado' });
     }
 
     const submission = await prisma.videoSubmission.create({
@@ -62,11 +62,11 @@ export const submitVideo = async (req: Request, res: Response) => {
     const response: Partial<typeof submission> = { ...submission };
     delete response.videoUrl;
 
-    res.status(201).json({ message: 'Video submitted successfully', submission: response, uploadUrl });
+    res.status(201).json({ message: 'Vídeo enviado com sucesso', submission: response, uploadUrl });
   } catch (error) {
     console.error('Error in submitVideo:', error);
 
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -76,7 +76,7 @@ export const getSubmissionHistory = async (req: Request, res: Response) => {
       where: { userId: req.user!.id },
     });
     if (!patientProfile) {
-      return res.status(404).json({ error: 'Patient profile not found' });
+      return res.status(404).json({ error: 'Perfil do paciente não encontrado' });
     }
     const submissions = await prisma.videoSubmission.findMany({
       where: { patientId: patientProfile.id },
@@ -85,6 +85,6 @@ export const getSubmissionHistory = async (req: Request, res: Response) => {
     });
     res.json(submissions);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };

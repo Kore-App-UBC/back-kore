@@ -9,7 +9,7 @@ export const createPatient = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     if (req?.user?.role !== "MANAGER") {
-      return res.status(400).json({ error: "Invalid user" });
+      return res.status(400).json({ error: "Usuário inválido" });
     }
 
     const userId = req?.user?.id;
@@ -29,11 +29,11 @@ export const createPatient = async (req: Request, res: Response) => {
       data: { userId: user.id },
     });
 
-    res.status(201).json({ message: 'Patient created successfully' });
+    res.status(201).json({ message: 'Paciente criado com sucesso' });
   } catch (error) {
     console.error(error);
 
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -43,7 +43,7 @@ export const createPhysiotherapist = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     if (req?.user?.role !== "MANAGER") {
-      return res.status(400).json({ error: "Invalid user" });
+      return res.status(400).json({ error: "Usuário inválido" });
     }
 
     const userId = req?.user?.id;
@@ -63,11 +63,11 @@ export const createPhysiotherapist = async (req: Request, res: Response) => {
       data: { userId: user.id },
     });
 
-    res.status(201).json({ message: 'Physiotherapist created successfully' });
+    res.status(201).json({ message: 'Fisioterapeuta criado com sucesso' });
   } catch (error) {
     console.error(error);
 
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -77,7 +77,7 @@ export const assignPhysiotherapist = async (req: Request, res: Response) => {
     const { physiotherapistId } = AssignPhysiotherapistSchema.parse(req.body);
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     console.log(patientId, physiotherapistId);
@@ -87,11 +87,11 @@ export const assignPhysiotherapist = async (req: Request, res: Response) => {
       data: { physiotherapistId },
     });
 
-    res.json({ message: 'Physiotherapist assigned successfully' });
+    res.json({ message: 'Fisioterapeuta atribuído com sucesso' });
   } catch (error) {
     console.error(error);
 
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -101,7 +101,7 @@ export const prescribeExercise = async (req: Request, res: Response) => {
     const { exerciseId } = PrescribeExerciseSchema.parse(req.body);
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     await prisma.prescribedExercise.create({
@@ -111,9 +111,9 @@ export const prescribeExercise = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json({ message: 'Exercise prescribed successfully' });
+    res.status(201).json({ message: 'Exercício prescrito com sucesso' });
   } catch (error) {
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -127,7 +127,7 @@ export const getPatients = async (req: Request, res: Response) => {
     });
 
     if (!manager || !manager.clinicId) {
-      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+      return res.status(400).json({ error: 'Gerente não associado a uma clínica' });
     }
 
     const patients = await prisma.patientProfile.findMany({
@@ -152,7 +152,7 @@ export const getPatients = async (req: Request, res: Response) => {
 
     res.json(patients);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -166,7 +166,7 @@ export const getMetrics = async (req: Request, res: Response) => {
     });
 
     if (!manager || !manager.clinicId) {
-      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+      return res.status(400).json({ error: 'Gerente não associado a uma clínica' });
     }
 
     const clinicId = manager.clinicId;
@@ -233,7 +233,7 @@ export const getMetrics = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -243,7 +243,7 @@ export const updatePatient = async (req: Request, res: Response) => {
     const updateData = UpdatePatientSchema.parse(req.body);
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     const managerId = req.user!.id;
@@ -253,7 +253,7 @@ export const updatePatient = async (req: Request, res: Response) => {
     });
 
     if (!manager || !manager.clinicId) {
-      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+      return res.status(400).json({ error: 'Gerente não associado a uma clínica' });
     }
 
     const patient = await prisma.user.findUnique({
@@ -262,7 +262,7 @@ export const updatePatient = async (req: Request, res: Response) => {
     });
 
     if (!patient || patient.role !== 'PATIENT' || patient.clinicId !== manager.clinicId) {
-      return res.status(404).json({ error: 'Patient not found or not in your clinic' });
+      return res.status(404).json({ error: 'Paciente não encontrado ou não pertence à sua clínica' });
     }
 
     const dataToUpdate: any = {};
@@ -277,10 +277,10 @@ export const updatePatient = async (req: Request, res: Response) => {
       data: dataToUpdate,
     });
 
-    res.json({ message: 'Patient updated successfully' });
+    res.json({ message: 'Paciente atualizado com sucesso' });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -293,7 +293,7 @@ export const getPhysiotherapists = async (req: Request, res: Response) => {
     });
 
     if (!manager || !manager.clinicId) {
-      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+      return res.status(400).json({ error: 'Gerente não associado a uma clínica' });
     }
 
     const physiotherapists = await prisma.physiotherapistProfile.findMany({
@@ -311,7 +311,7 @@ export const getPhysiotherapists = async (req: Request, res: Response) => {
 
     res.json(physiotherapists);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -321,7 +321,7 @@ export const updatePhysiotherapist = async (req: Request, res: Response) => {
     const updateData = UpdatePhysiotherapistSchema.parse(req.body);
 
     if (!physioId) {
-      return res.status(400).json({ error: 'Physiotherapist ID is required' });
+      return res.status(400).json({ error: 'ID do fisioterapeuta é obrigatório' });
     }
 
     const physiotherapist = await prisma.user.findUnique({
@@ -330,7 +330,7 @@ export const updatePhysiotherapist = async (req: Request, res: Response) => {
     });
 
     if (!physiotherapist || physiotherapist.role !== 'PHYSIOTHERAPIST') {
-      return res.status(404).json({ error: 'Physiotherapist not found' });
+      return res.status(404).json({ error: 'Fisioterapeuta não encontrado' });
     }
 
     const dataToUpdate: any = {};
@@ -345,10 +345,10 @@ export const updatePhysiotherapist = async (req: Request, res: Response) => {
       data: dataToUpdate,
     });
 
-    res.json({ message: 'Physiotherapist updated successfully' });
+    res.json({ message: 'Fisioterapeuta atualizado com sucesso' });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -361,7 +361,7 @@ export const getPhysiotherapistsProfileDropdown = async (req: Request, res: Resp
     });
 
     if (!manager || !manager.clinicId) {
-      return res.status(400).json({ error: 'Manager not associated with a clinic' });
+      return res.status(400).json({ error: 'Gerente não associado a uma clínica' });
     }
 
     const physiotherapistsProfile = await prisma.physiotherapistProfile.findMany({
@@ -384,7 +384,7 @@ export const getPhysiotherapistsProfileDropdown = async (req: Request, res: Resp
 
     res.json(dropdown);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -393,7 +393,7 @@ export const createExercise = async (req: Request, res: Response) => {
     const { name, description, instructionsUrl, classificationData, animationData } = CreateExerciseSchema.parse(req.body);
 
     if (req?.user?.role !== "MANAGER") {
-      return res.status(400).json({ error: "Invalid user" });
+      return res.status(400).json({ error: "Usuário inválido" });
     }
 
     const exercise = await prisma.exercise.create({
@@ -410,10 +410,10 @@ export const createExercise = async (req: Request, res: Response) => {
     const { reloadExercises } = await import('../services/poseService');
     await reloadExercises();
 
-    res.status(201).json({ message: 'Exercise created successfully', exercise });
+    res.status(201).json({ message: 'Exercício criado com sucesso', exercise });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -423,7 +423,7 @@ export const updateExercise = async (req: Request, res: Response) => {
     const updateData = UpdateExerciseSchema.parse(req.body);
 
     if (!exerciseId) {
-      return res.status(400).json({ error: 'Exercise ID is required' });
+      return res.status(400).json({ error: 'ID do exercício é obrigatório' });
     }
 
     const dataToUpdate: any = {};
@@ -442,10 +442,10 @@ export const updateExercise = async (req: Request, res: Response) => {
     const { reloadExercises } = await import('../services/poseService');
     await reloadExercises();
 
-    res.json({ message: 'Exercise updated successfully' });
+    res.json({ message: 'Exercício atualizado com sucesso' });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -454,7 +454,7 @@ export const deleteExercise = async (req: Request, res: Response) => {
     const { exerciseId } = req.params;
 
     if (!exerciseId) {
-      return res.status(400).json({ error: 'Exercise ID is required' });
+      return res.status(400).json({ error: 'ID do exercício é obrigatório' });
     }
 
     await prisma.exercise.delete({
@@ -465,10 +465,10 @@ export const deleteExercise = async (req: Request, res: Response) => {
     const { reloadExercises } = await import('../services/poseService');
     await reloadExercises();
 
-    res.json({ message: 'Exercise deleted successfully' });
+    res.json({ message: 'Exercício excluído com sucesso' });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -480,6 +480,6 @@ export const getExercises = async (req: Request, res: Response) => {
 
     res.json(exercises);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };

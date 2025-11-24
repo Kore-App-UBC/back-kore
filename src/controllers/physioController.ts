@@ -11,7 +11,7 @@ export const getMe = async (req: Request, res: Response) => {
     });
     res.json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -29,14 +29,14 @@ export const getPatients = async (req: Request, res: Response) => {
 
     res.json(patients);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
 export const getSubmissionQueue = async (req: Request, res: Response) => {
   try {
     if (!req.user || !req.user.id) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: 'Não autorizado' });
     }
 
     const submissions = await prisma.videoSubmission.findMany({
@@ -50,7 +50,7 @@ export const getSubmissionQueue = async (req: Request, res: Response) => {
 
     res.json(submissions);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -58,7 +58,7 @@ export const getSubmissionDetails = async (req: Request, res: Response) => {
   try {
     const { submissionId } = req.params;
     if (!submissionId) {
-      return res.status(400).json({ error: 'Submission ID is required' });
+      return res.status(400).json({ error: 'ID da submissão é obrigatório' });
     }
 
     const submission = await prisma.videoSubmission.findUnique({
@@ -67,7 +67,7 @@ export const getSubmissionDetails = async (req: Request, res: Response) => {
     });
 
     if (!submission) {
-      return res.status(404).json({ error: 'Submission not found' });
+      return res.status(404).json({ error: 'Submissão não encontrada' });
     }
 
     if (submission.videoUrl) {
@@ -77,7 +77,7 @@ export const getSubmissionDetails = async (req: Request, res: Response) => {
 
     res.json(submission);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -87,7 +87,7 @@ export const submitFeedback = async (req: Request, res: Response) => {
     const { physioFeedback } = FeedbackSchema.parse(req.body);
 
     if (!submissionId) {
-      return res.status(400).json({ error: 'Submission ID is required' });
+      return res.status(400).json({ error: 'ID da submissão é obrigatório' });
     }
 
     await prisma.report.update({
@@ -103,9 +103,9 @@ export const submitFeedback = async (req: Request, res: Response) => {
       data: { status: 'REVIEWED' },
     });
 
-    res.json({ message: 'Feedback submitted successfully' });
+    res.json({ message: 'Feedback enviado com sucesso' });
   } catch (error) {
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -115,7 +115,7 @@ export const prescribeExercise = async (req: Request, res: Response) => {
     const { exerciseId } = PrescribeExerciseSchema.parse(req.body);
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     // Verify the physiotherapist is assigned to this patient
@@ -130,7 +130,7 @@ export const prescribeExercise = async (req: Request, res: Response) => {
     });
 
     if (!patient || patient.physiotherapistId !== physiotherapistProfile!.id) {
-      return res.status(403).json({ error: 'You are not assigned to this patient' });
+      return res.status(403).json({ error: 'Você não está atribuído a este paciente' });
     }
 
     // Check if exercise is already prescribed
@@ -144,7 +144,7 @@ export const prescribeExercise = async (req: Request, res: Response) => {
     });
 
     if (existingPrescription) {
-      return res.status(400).json({ error: 'Exercise is already prescribed to this patient' });
+      return res.status(400).json({ error: 'Exercício já prescrito para este paciente' });
     }
 
     // Create the prescription
@@ -166,12 +166,12 @@ export const prescribeExercise = async (req: Request, res: Response) => {
     });
 
     res.status(201).json({
-      message: 'Exercise prescribed successfully',
+      message: 'Exercício prescrito com sucesso',
       prescription
     });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -180,7 +180,7 @@ export const getPrescribedExercises = async (req: Request, res: Response) => {
     const { patientId } = req.params;
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     // Verify the physiotherapist is assigned to this patient
@@ -195,7 +195,7 @@ export const getPrescribedExercises = async (req: Request, res: Response) => {
     });
 
     if (!patient || patient.physiotherapistId !== physiotherapistProfile!.id) {
-      return res.status(403).json({ error: 'You are not assigned to this patient' });
+      return res.status(403).json({ error: 'Você não está atribuído a este paciente' });
     }
 
     const prescriptions = await prisma.prescribedExercise.findMany({
@@ -208,7 +208,7 @@ export const getPrescribedExercises = async (req: Request, res: Response) => {
 
     res.json(prescriptions);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
 
@@ -217,7 +217,7 @@ export const removePrescribedExercise = async (req: Request, res: Response) => {
     const { patientId, exerciseId } = req.params;
 
     if (!patientId || !exerciseId) {
-      return res.status(400).json({ error: 'Patient ID and Exercise ID are required' });
+      return res.status(400).json({ error: 'ID do paciente e ID do exercício são obrigatórios' });
     }
 
     // Verify the physiotherapist is assigned to this patient
@@ -232,7 +232,7 @@ export const removePrescribedExercise = async (req: Request, res: Response) => {
     });
 
     if (!patient || patient.physiotherapistId !== physiotherapistProfile!.id) {
-      return res.status(403).json({ error: 'You are not assigned to this patient' });
+      return res.status(403).json({ error: 'Você não está atribuído a este paciente' });
     }
 
     await prisma.prescribedExercise.delete({
@@ -244,10 +244,10 @@ export const removePrescribedExercise = async (req: Request, res: Response) => {
       },
     });
 
-    res.json({ message: 'Exercise prescription removed successfully' });
+    res.json({ message: 'Prescrição de exercício removida com sucesso' });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error: 'Invalid input' });
+    res.status(400).json({ error: 'Entrada inválida' });
   }
 };
 
@@ -256,7 +256,7 @@ export const getAvailableExercises = async (req: Request, res: Response) => {
     const { patientId } = req.params;
 
     if (!patientId) {
-      return res.status(400).json({ error: 'Patient ID is required' });
+      return res.status(400).json({ error: 'ID do paciente é obrigatório' });
     }
 
     // Verify the physiotherapist is assigned to this patient
@@ -271,7 +271,7 @@ export const getAvailableExercises = async (req: Request, res: Response) => {
     });
 
     if (!patient || patient.physiotherapistId !== physiotherapistProfile!.id) {
-      return res.status(403).json({ error: 'You are not assigned to this patient' });
+      return res.status(403).json({ error: 'Você não está atribuído a este paciente' });
     }
 
     // Get all exercises
@@ -295,6 +295,6 @@ export const getAvailableExercises = async (req: Request, res: Response) => {
 
     res.json(availableExercises);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
